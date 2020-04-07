@@ -112,7 +112,7 @@ public class Header extends HorizontalLayout {
         userMenuItem.setIcon(VaadinIcons.USER);
         userMenuItem.addItem(app.getMessage("profile"), selectedItem -> {
             removeSelected();
-            app.navigateTo("/profile");
+            app.navigateTo("profile");
         });
         userMenuItem.addItem(app.getMessage("logout"), selectedItem -> app.logout());
         return mb;
@@ -157,7 +157,7 @@ public class Header extends HorizontalLayout {
 
     private void menuItemSelected (MenuBar.MenuItem selectedItem, Element e) {
         removeSelected();
-        app.navigateTo("/" + e.getAttributeValue("action"));
+        app.navigateTo(e.getAttributeValue("action"));
         selectedItem.setStyleName("underline");
     }
 

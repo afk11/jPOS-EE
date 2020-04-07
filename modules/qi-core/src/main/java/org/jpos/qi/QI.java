@@ -21,6 +21,7 @@ package org.jpos.qi;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Title;
 import com.vaadin.data.ValueContext;
+import com.vaadin.navigator.PushStateNavigation;
 import com.vaadin.server.*;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
@@ -45,6 +46,7 @@ import java.util.*;
 
 @Theme("jpos")
 @Title("jPOS")
+@PushStateNavigation
 public class QI extends UI {
     private Locale locale;
     private List<Element> availableLocales;
@@ -53,6 +55,7 @@ public class QI extends UI {
     private ValueContext valueContext;
     private Log log;
     private Q2 q2;
+    private String title;
 
     private static final String CONFIG_NAME = "QI";
     private static final long CONFIG_TIMEOUT = 5000L;
@@ -166,7 +169,7 @@ public class QI extends UI {
 
     @SuppressWarnings("unused")
     private void init (VaadinRequest vr, Element cfg) {
-        String title = cfg.getChildText("title");
+        title = cfg.getChildText("title");
         String theme = cfg.getChildText("theme");
         String logger = cfg.getAttributeValue("logger");
         messageFiles = cfg.getChildren("messages");
@@ -370,7 +373,7 @@ public class QI extends UI {
               });
         }
         if (getUser().isForcePasswordChange())
-            navigateTo("/users/" + getUser().getId() + "/profile/password_change");
+            navigateTo("users/" + getUser().getId() + "/profile/password_change");
     }
 
     public Header getHeader() {
@@ -406,5 +409,13 @@ public class QI extends UI {
 
     public Q2 getQ2() {
         return q2;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }

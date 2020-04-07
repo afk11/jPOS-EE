@@ -24,6 +24,7 @@ import com.vaadin.data.validator.RegexpValidator;
 import com.vaadin.navigator.Navigator;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewProvider;
+import com.vaadin.server.Page;
 import com.vaadin.ui.Layout;
 import org.jdom2.Element;
 import org.jpos.core.Configurable;
@@ -38,7 +39,7 @@ import java.util.regex.Pattern;
 
 public class QINavigator extends Navigator {
     private static String URL_PATTERN_STRING = "^[\\w\\s.\\-\\/\\?\\=\\:\\&]{0,255}$";
-    private static Pattern ROUTE_PATTERN = Pattern.compile("^/(\\w+)/*.*");
+    private static Pattern ROUTE_PATTERN = Pattern.compile("(\\w+)/*.*");
     public Validator validator;
     QI app;
     Map<String,String> perms = new HashMap<>();
@@ -63,16 +64,21 @@ public class QINavigator extends Navigator {
             try {
                 Class c = Class.forName(clazz);
                 if (View.class.isAssignableFrom(c)) {
-                    removeView("/" + route);
-                    addProvider (new QIViewProvider ("/" + route, c, e));
+                    removeView(route);
+//                    addProvider (new QIStaticViewProvider("/" + route, (View) c.newInstance(), e));
+                    addProvider (new QIViewProvider (route, c, e));
                 } else {
-                    addView ("/" + route, DefaultView.class);
+                    addView (route, DefaultView.class);
                 }
                 perms.put(route, perm);
                 e.getChildren("property").stream().filter(p -> "entityName".equals(p.getAttributeValue("name"))).forEach(
                         p -> routes.putIfAbsent(p.getAttributeValue("value"), route));
-            } catch (ClassNotFoundException ex) {
+            } catch (ClassNotFoundException | IllegalArgumentException ex) {
                 app.getLog().error(ex);
+//            } catch (IllegalAccessException ex) {
+//                ex.printStackTrace();
+//            } catch (InstantiationException ex) {
+//                ex.printStackTrace();
             }
             app.addView(route, e);
         }
@@ -81,13 +87,14 @@ public class QINavigator extends Navigator {
 
     @Override
     public void navigateTo(String navigationState) {
+        Page.getCurrent().setTitle(navigationState);
         addHistory(navigationState);
         if (app.getUser().isForcePasswordChange()) {
-            super.navigateTo("/users/" + app.getUser().getId() + "/profile/password_change");
+            super.navigateTo("users/" + app.getUser().getId() + "/profile/password_change");
             return;
         }
         if (navigationState == null || "".equals(navigationState)) {
-            super.navigateTo("/home");
+            super.navigateTo("home");
         } else {
             ValidationResult result = validator.apply(navigationState, app.getValueContext());
             if (!result.isError()) {
@@ -99,7 +106,7 @@ public class QINavigator extends Navigator {
                         allowed = hasAccessToRoute(route);
                     }
                     if (!allowed) {
-                        navigationState = "/home";
+                        navigationState = "home";
                     }
                     super.navigateTo(navigationState);
                     if (app.sidebar() != null) {
@@ -107,14 +114,15 @@ public class QINavigator extends Navigator {
                     }
                 } catch( IllegalArgumentException e) {
                     QI.getQI().displayNotification(e.getMessage());
-                    super.navigateTo("/home");
+                    super.navigateTo("home");
                 }
             } else {
                 QI.getQI().displayNotification(result.getErrorMessage());
                 QI.getQI().getLog().error(result.getErrorMessage());
-                super.navigateTo("/home");
+                super.navigateTo("home");
             }
         }
+        Page.getCurrent().setTitle(QI.getQI().getTitle());
     }
 
     public void navigateBack () {
@@ -152,6 +160,38 @@ public class QINavigator extends Navigator {
         history.pop(); // Remove current view.
         return history.pop();
     }
+
+//    public class QIStaticViewProvider extends StaticViewProvider {
+//        private final Element config;
+//
+//        public QIStaticViewProvider(String viewName, View view, Element config) {
+//            super(viewName, view);
+//            this.config = config;
+//        }
+//
+//        @Override
+//        public View getView(String viewName) {
+//            if (getViewName().equals(viewName)) {
+//                try {
+//                    View view = super.getView(viewName);
+//                    if (view instanceof Configurable) {
+//                        ((Configurable)view).setConfiguration(qfactory.getConfiguration(config));
+//                    }
+//                    if (view instanceof XmlConfigurable) {
+//                        ((XmlConfigurable)view).setConfiguration(config);
+//                    }
+//                    String sidebar = config.getAttributeValue("sidebar");
+//                    if (sidebar != null) {
+//                        QI.getQI().sidebar().switchTo(sidebar);
+//                    }
+//                    return view;
+//                } catch (ConfigurationException e) {
+//                    app.getLog().warn(e);
+//                }
+//            }
+//            return null;
+//        }
+//    }
 
     public class QIViewProvider implements ViewProvider {
         private final String viewName;

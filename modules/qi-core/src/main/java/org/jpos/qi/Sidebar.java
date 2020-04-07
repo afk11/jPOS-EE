@@ -18,6 +18,7 @@
 
 package org.jpos.qi;
 
+import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.Page;
 import com.vaadin.ui.*;
@@ -26,6 +27,7 @@ import org.jdom2.Element;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Sidebar extends CssLayout {
     private static final String STYLE_VISIBLE = "valo-menu-visible";
@@ -59,7 +61,6 @@ public class Sidebar extends CssLayout {
     }
 
 
-    @SuppressWarnings("unchecked")
     private void loadSideBarOptions (String id) {
         if (id != null && id.equals(currentSidebarId))
             return;
@@ -75,7 +76,7 @@ public class Sidebar extends CssLayout {
         Element cfg = app.getXmlConfiguration();
         for (Element sb : cfg.getChildren("sidebar")) {
             String eid = sb.getAttributeValue("id");
-            if (id == eid || (eid != null && eid.equals(id))) {
+            if (Objects.equals(eid, id)) {
                 for (Element e : sb.getChildren()) {
                     if ("section".equals(e.getName())) {
                         Label l = new Label(app.getMessage(e.getAttributeValue("name")));
@@ -89,16 +90,16 @@ public class Sidebar extends CssLayout {
                             String iconName = e.getAttributeValue("icon");
                             if (iconName != null) {
                                 try {
-                                    b.setIcon(FontAwesome.valueOf(iconName));
+                                    b.setIcon(VaadinIcons.valueOf(iconName));
                                 } catch (IllegalArgumentException ex) {
-                                    b.setIcon(FontAwesome.EXCLAMATION_TRIANGLE);
+                                    b.setIcon(VaadinIcons.EXCLAMATION);
                                     b.setEnabled(false);
                                 }
                             }
                             String action = e.getAttributeValue("action");
                             options.put(action, b);
                             if (action != null)
-                                b.addClickListener((Button.ClickListener) event -> app.getNavigator().navigateTo("/" + action));
+                                b.addClickListener((Button.ClickListener) event -> app.getNavigator().navigateTo(action));
                             menuItems.addComponent(b);
                         }
                     }
@@ -129,7 +130,7 @@ public class Sidebar extends CssLayout {
         Button valoMenuToggleButton = new Button("", (Button.ClickListener) event -> {
             if (Page.getCurrent().getBrowserWindowWidth() > 1100) {
                 boolean expand = !menuItems.isVisible();
-                menuItems.setVisible(expand ? true : false);
+                menuItems.setVisible(expand);
             } else {
                 if (getStyleName().contains(STYLE_VISIBLE))
                     removeStyleName(STYLE_VISIBLE);
@@ -137,7 +138,7 @@ public class Sidebar extends CssLayout {
                     addStyleName(STYLE_VISIBLE);
             }
         });
-        valoMenuToggleButton.setIcon(FontAwesome.LIST);
+        valoMenuToggleButton.setIcon(VaadinIcons.LIST);
         valoMenuToggleButton.addStyleName("valo-menu-toggle");
         valoMenuToggleButton.addStyleName(ValoTheme.BUTTON_BORDERLESS);
         valoMenuToggleButton.addStyleName(ValoTheme.BUTTON_SMALL);

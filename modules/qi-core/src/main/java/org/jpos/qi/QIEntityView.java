@@ -20,13 +20,13 @@ package org.jpos.qi;
 
 import com.vaadin.data.*;
 import com.vaadin.icons.VaadinIcons;
+import com.vaadin.server.Page;
 import com.vaadin.ui.*;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
-import com.vaadin.shared.ui.ContentMode;
 
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.navigator.View;
@@ -79,8 +79,8 @@ public abstract class QIEntityView<T> extends VerticalLayout implements View, Co
     public QIEntityView(Class<T> clazz, String name) {
         this(clazz);
         this.name = name;
-        this.title = "<strong>" + app.getMessage(name) + "</strong>";
-        generalRoute = "/" + name;
+        this.title = app.getMessage(name);
+        generalRoute = name;
     }
 
     public QIEntityView (Class<T> clazz) {
@@ -105,6 +105,7 @@ public abstract class QIEntityView<T> extends VerticalLayout implements View, Co
             fieldsLayouts = new ArrayList<>();
             showSpecificView (event.getParameters());
         }
+        Page.getCurrent().setTitle(getTitle());
     }
 
     @Override
@@ -144,7 +145,7 @@ public abstract class QIEntityView<T> extends VerticalLayout implements View, Co
                 for (String queryParam : queryParams) {
                     String[] keyValue = queryParam.split("=");
                     if (keyValue.length > 0  && "back".equals(keyValue[0])) {
-                        ((QINavigator)app.getNavigator()).setPreviousView("/" + keyValue[1].replace(".", "/"));
+                        ((QINavigator)app.getNavigator()).setPreviousView(keyValue[1].replace(".", "/"));
                     }
                 }
             }
@@ -155,7 +156,8 @@ public abstract class QIEntityView<T> extends VerticalLayout implements View, Co
                     "errorMessage.notExists", "<strong>" + getEntityName().toUpperCase() + "</strong>: " + params[0]));
             return;
         }
-        Layout header = createHeader(title + ": " + getHeaderSpecificTitle(o));
+        String headerSpecificTitle = getHeaderSpecificTitle(o);
+        Layout header = createHeader(title, headerSpecificTitle);
         addComponent(header);
         Panel panel = new Panel();
         panel.setSizeFull();
@@ -180,16 +182,34 @@ public abstract class QIEntityView<T> extends VerticalLayout implements View, Co
     }
 
     protected HorizontalLayout createHeader (String title) {
+        return createHeader(title, null);
+    }
+
+    protected HorizontalLayout createHeader (String title, String specificTitle) {
         HorizontalLayout header = new HorizontalLayout();
         header.setWidth("100%");
-        header.setSpacing(false);
+        header.setSpacing(true);
         header.setMargin(new MarginInfo(false, true, false, true));
-        Label lbl = new Label(title);
-        lbl.addStyleName("h2");
+        Label lbl = new Label();
+        lbl.setStyleName(ValoTheme.LABEL_H2);
+        lbl.addStyleName(ValoTheme.LABEL_BOLD);
         lbl.setSizeUndefined();
-        lbl.setContentMode(ContentMode.HTML);
         header.addComponent(lbl);
         header.setComponentAlignment(lbl, Alignment.MIDDLE_LEFT);
+        if (specificTitle != null && !"".equals(specificTitle)) {
+            title = title + ": ";
+            setTitle(title + specificTitle);
+            lbl.setWidth(null);
+            Label specificLbl = new Label(specificTitle);
+            specificLbl.setStyleName(ValoTheme.LABEL_H2);
+            specificLbl.setSizeUndefined();
+            header.addComponent(specificLbl);
+            header.setComponentAlignment(specificLbl, Alignment.MIDDLE_LEFT);
+            header.setExpandRatio(lbl, 0);
+            header.setExpandRatio(specificLbl, 1);
+        }
+        lbl.setValue(title);
+        setTitle(getTitle() + " | " + QI.getQI().getTitle());
         if (isGeneralView() && canAdd()) {
             Button addBtn = new Button(getApp().getMessage("add"));
             addBtn.addStyleName("borderless-colored");
@@ -808,10 +828,10 @@ public abstract class QIEntityView<T> extends VerticalLayout implements View, Co
     public void setConfiguration (Element element) {
         Attribute routeAttribute = element.getAttribute("route");
         name = routeAttribute != null ? routeAttribute.getValue() : name;
-        generalRoute = routeAttribute != null ? "/" + routeAttribute.getValue() : generalRoute;
+        generalRoute = routeAttribute != null ? routeAttribute.getValue() : generalRoute;
         if (name != null && QI.getQI().getView(name)!= null)  {
             this.setViewConfig(QI.getQI().getView(name));
-            this.title = "<strong>" + app.getMessage(name) + "</strong>";
+            this.title = app.getMessage(name);
             this.visibleColumns = getViewConfig().getVisibleColumns();
             this.visibleFields = getViewConfig().getVisibleFields();
             this.readOnlyFields = getViewConfig().getReadOnlyFields();
