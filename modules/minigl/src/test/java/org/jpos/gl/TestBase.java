@@ -20,15 +20,15 @@ package org.jpos.gl;
 
 import org.jpos.gl.tools.Export;
 import org.jpos.gl.tools.Import;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class TestBase {
     protected GLSession gls;
     protected long start;
     protected long checkpoint;
 
-    @BeforeEach
+    @BeforeAll
     public void setUpBase () throws Exception {
         try {
             String userName = System.getProperty("user.name");
@@ -43,7 +43,7 @@ public abstract class TestBase {
         gls = new GLSession("bob");
         start = checkpoint = System.currentTimeMillis();
     }
-    @AfterEach
+    @AfterAll
     public void tearDownBase () throws Exception {
         gls.close();
     }
