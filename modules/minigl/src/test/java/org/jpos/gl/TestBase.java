@@ -24,12 +24,12 @@ import org.junit.jupiter.api.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class TestBase {
-    protected GLSession gls;
-    protected long start;
-    protected long checkpoint;
+    protected static GLSession gls;
+    protected static long start;
+    protected static long checkpoint;
 
     @BeforeAll
-    public void setUpBase () throws Exception {
+    public static void setUpBase () throws Exception {
         try {
             String userName = System.getProperty("user.name");
             System.setProperty("user.name", "travis");
@@ -44,7 +44,7 @@ public abstract class TestBase {
         start = checkpoint = System.currentTimeMillis();
     }
     @AfterAll
-    public void tearDownBase () throws Exception {
+    public static void tearDownBase () throws Exception {
         gls.close();
     }
 
